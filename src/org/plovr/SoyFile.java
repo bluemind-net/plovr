@@ -61,6 +61,7 @@ public class SoyFile extends LocalFileJsInput {
   public String generateCode() {
     SoyFileSet.Builder builder = injector.getInstance(SoyFileSet.Builder.class);
     builder.add(getSource());
+    builder.setStrictAutoescapingRequired(true);
     SoyFileSet fileSet = builder.build();
     String code = fileSet.compileToJsSrc(jsSrcOptions, msgBundle).get(0);
     logger.fine(code);
