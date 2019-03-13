@@ -819,7 +819,7 @@ goog.array.join = function(var_args) {
 goog.array.toArray = function(object) {
   var length = object.length;
 
-  // If length is not a number the following it false. This case is kept for
+  // If length is not a number the following is false. This case is kept for
   // backwards compatibility since there are callers that pass objects that are
   // not array like.
   if (length > 0) {
@@ -991,9 +991,9 @@ goog.array.removeDuplicates = function(arr, opt_rv, opt_hashFn) {
  * @param {TARGET} target The sought value.
  * @param {function(TARGET, VALUE): number=} opt_compareFn Optional comparison
  *     function by which the array is ordered. Should take 2 arguments to
- *     compare, and return a negative number, zero, or a positive number
- *     depending on whether the first argument is less than, equal to, or
- *     greater than the second.
+ *     compare, the target value and an element from your array, and return a
+ *     negative number, zero, or a positive number depending on whether the
+ *     first argument is less than, equal to, or greater than the second.
  * @return {number} Lowest index of the target value if found, otherwise
  *     (-(insertion point) - 1). The insertion point is where the value should
  *     be inserted into arr to preserve the sorted property.  Return value >= 0

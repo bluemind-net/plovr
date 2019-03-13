@@ -13,8 +13,16 @@
 // limitations under the License.
 
 /**
- * @fileoverview Utilities for creating functions. Loosely inspired by the
- * java classes: http://goo.gl/GM0Hmu and http://goo.gl/6k7nI8.
+ * @fileoverview Utilities for creating functions. Loosely inspired by these
+ * java classes from the Guava library:
+ * com.google.common.base.Functions
+ * https://google.github.io/guava/releases/snapshot-jre/api/docs/index.html?com/google/common/base/Functions.html
+ *
+ * com.google.common.base.Predicates
+ * https://google.github.io/guava/releases/snapshot-jre/api/docs/index.html?com/google/common/base/Predicates.html
+ *
+ * More about these can be found at
+ * https://github.com/google/guava/wiki/FunctionalExplained
  *
  * @author nicksantos@google.com (Nick Santos)
  */
@@ -38,21 +46,27 @@ goog.functions.constant = function(retValue) {
  * Always returns false.
  * @type {function(...): boolean}
  */
-goog.functions.FALSE = goog.functions.constant(false);
+goog.functions.FALSE = function() {
+  return false;
+};
 
 
 /**
  * Always returns true.
  * @type {function(...): boolean}
  */
-goog.functions.TRUE = goog.functions.constant(true);
+goog.functions.TRUE = function() {
+  return true;
+};
 
 
 /**
  * Always returns NULL.
  * @type {function(...): null}
  */
-goog.functions.NULL = goog.functions.constant(null);
+goog.functions.NULL = function() {
+  return null;
+};
 
 
 /**

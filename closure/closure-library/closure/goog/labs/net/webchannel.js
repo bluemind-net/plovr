@@ -50,6 +50,7 @@ goog.provide('goog.net.WebChannel');
 
 goog.require('goog.events');
 goog.require('goog.events.Event');
+goog.require('goog.events.Listenable');
 goog.require('goog.net.XmlHttpFactory');
 
 
@@ -64,6 +65,7 @@ goog.require('goog.net.XmlHttpFactory');
  *
  * @interface
  * @extends {EventTarget}
+ * @extends {goog.events.Listenable}
  */
 goog.net.WebChannel = function() {};
 
@@ -148,6 +150,11 @@ goog.net.WebChannel.FailureRecovery = function() {};
  * backgroundChannelTest: whether to run the channel test (detecting networking
  * conditions) as a background process so the OPEN event will be fired sooner
  * to reduce the initial handshake delay. This option defaults to true.
+ * The actual background channel test is not fully implemented.
+ *
+ * forceLongPolling: whether to force long-polling from client to server.
+ * This defaults to false. Long-polling may be necessary when a (MITM) proxy
+ * is buffering data sent by the server.
  *
  * fastHandshake: experimental feature to enable true 0-RTT message delivery,
  * e.g. by leveraging QUIC 0-RTT (which requires GET to be used). This option
@@ -196,6 +203,7 @@ goog.net.WebChannel.FailureRecovery = function() {};
  *   httpSessionIdParam: (string|undefined),
  *   httpHeadersOverwriteParam: (string|undefined),
  *   backgroundChannelTest: (boolean|undefined),
+ *   forceLongPolling: (boolean|undefined),
  *   fastHandshake: (boolean|undefined),
  *   disableRedact: (boolean|undefined),
  *   clientProfile: (string|undefined),

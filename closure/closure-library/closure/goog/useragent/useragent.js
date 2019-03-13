@@ -282,6 +282,17 @@ goog.define('goog.userAgent.ASSUME_IPOD', false);
 
 
 /**
+ * @define {boolean} Whether the user agent is running on KaiOS.
+ */
+goog.define('goog.userAgent.ASSUME_KAIOS', false);
+
+/**
+ * @define {boolean} Whether the user agent is running on Go2Phone.
+ */
+goog.define('goog.userAgent.ASSUME_GO2PHONE', false);
+
+
+/**
  * @type {boolean}
  * @private
  */
@@ -401,6 +412,21 @@ goog.userAgent.IOS = goog.userAgent.PLATFORM_KNOWN_ ?
     (goog.userAgent.ASSUME_IPHONE || goog.userAgent.ASSUME_IPAD ||
      goog.userAgent.ASSUME_IPOD) :
     goog.labs.userAgent.platform.isIos();
+
+/**
+ * Whether the user agent is running on KaiOS.
+ */
+goog.userAgent.KAIOS = goog.userAgent.PLATFORM_KNOWN_ ?
+    goog.userAgent.ASSUME_KAIOS :
+    goog.labs.userAgent.platform.isKaiOS();
+
+/**
+ * Whether the user agent is running on Go2Phone.
+ */
+goog.userAgent.GO2PHONE = goog.userAgent.PLATFORM_KNOWN_ ?
+    goog.userAgent.ASSUME_GO2PHONE :
+    goog.labs.userAgent.platform.isGo2Phone();
+
 
 /**
  * @return {string} The string that describes the version number of the user

@@ -453,7 +453,7 @@ goog.dom.$$ = goog.dom.getElementsByTagNameAndClass;
  */
 goog.dom.setProperties = function(element, properties) {
   goog.object.forEach(properties, function(val, key) {
-    if (val && val.implementsGoogStringTypedString) {
+    if (val && typeof val == 'object' && val.implementsGoogStringTypedString) {
       val = val.getTypedStringValue();
     }
     if (key == 'style') {
@@ -798,9 +798,9 @@ goog.dom.getWindow_ = function(doc) {
  *     of name-value pairs for attributes. If a string, then this is the
  *     className of the new element. If an array, the elements will be joined
  *     together as the className of the new element.
- * @param {...(Object|string|Array|NodeList)} var_args Further DOM nodes or
- *     strings for text nodes. If one of the var_args is an array or NodeList,
- *     its elements will be added as childNodes instead.
+ * @param {...(Object|string|Array|NodeList|null|undefined)} var_args Further
+ *     DOM nodes or strings for text nodes. If one of the var_args is an array
+ *     or NodeList, its elements will be added as childNodes instead.
  * @return {R} Reference to a DOM node. The return type is {!Element} if tagName
  *     is a string or a more specific type if it is a member of
  *     goog.dom.TagName (e.g. {!HTMLAnchorElement} for goog.dom.TagName.A).
@@ -912,9 +912,9 @@ goog.dom.append_ = function(doc, parent, args, startIndex) {
  *     of name-value pairs for attributes. If a string, then this is the
  *     className of the new element. If an array, the elements will be joined
  *     together as the className of the new element.
- * @param {...(Object|string|Array|NodeList)} var_args Further DOM nodes or
- *     strings for text nodes. If one of the var_args is an array, its
- *     children will be added as childNodes instead.
+ * @param {...(Object|string|Array|NodeList|null|undefined)} var_args Further
+ *     DOM nodes or strings for text nodes. If one of the var_args is an array,
+ *     its children will be added as childNodes instead.
  * @return {R} Reference to a DOM node. The return type is {!Element} if tagName
  *     is a string or a more specific type if it is a member of
  *     goog.dom.TagName (e.g. {!HTMLAnchorElement} for goog.dom.TagName.A).
@@ -1055,7 +1055,7 @@ goog.dom.safeHtmlToNode_ = function(doc, html) {
   if (goog.dom.BrowserFeature.INNER_HTML_NEEDS_SCOPED_ELEMENT) {
     goog.dom.safe.setInnerHtml(
         tempDiv, goog.html.SafeHtml.concat(goog.html.SafeHtml.BR, html));
-    tempDiv.removeChild(tempDiv.firstChild);
+    tempDiv.removeChild(goog.asserts.assert(tempDiv.firstChild));
   } else {
     goog.dom.safe.setInnerHtml(tempDiv, html);
   }
@@ -1072,7 +1072,7 @@ goog.dom.safeHtmlToNode_ = function(doc, html) {
  */
 goog.dom.childrenToNode_ = function(doc, tempDiv) {
   if (tempDiv.childNodes.length == 1) {
-    return tempDiv.removeChild(tempDiv.firstChild);
+    return tempDiv.removeChild(goog.asserts.assert(tempDiv.firstChild));
   } else {
     var fragment = doc.createDocumentFragment();
     while (tempDiv.firstChild) {
@@ -1178,6 +1178,9 @@ goog.dom.canHaveChildren = function(node) {
  * @param {Node} child Child.
  */
 goog.dom.appendChild = function(parent, child) {
+  goog.asserts.assert(
+      parent != null && child != null,
+      'goog.dom.appendChild expects non-null arguments');
   parent.appendChild(child);
 };
 
@@ -1217,6 +1220,9 @@ goog.dom.removeChildren = function(node) {
  * @param {Node} refNode Reference node to insert before.
  */
 goog.dom.insertSiblingBefore = function(newNode, refNode) {
+  goog.asserts.assert(
+      newNode != null && refNode != null,
+      'goog.dom.insertSiblingBefore expects non-null arguments');
   if (refNode.parentNode) {
     refNode.parentNode.insertBefore(newNode, refNode);
   }
@@ -1230,6 +1236,9 @@ goog.dom.insertSiblingBefore = function(newNode, refNode) {
  * @param {Node} refNode Reference node to insert after.
  */
 goog.dom.insertSiblingAfter = function(newNode, refNode) {
+  goog.asserts.assert(
+      newNode != null && refNode != null,
+      'goog.dom.insertSiblingAfter expects non-null arguments');
   if (refNode.parentNode) {
     refNode.parentNode.insertBefore(newNode, refNode.nextSibling);
   }
@@ -1248,6 +1257,8 @@ goog.dom.insertSiblingAfter = function(newNode, refNode) {
 goog.dom.insertChildAt = function(parent, child, index) {
   // Note that if the second argument is null, insertBefore
   // will append the child at the end of the list of children.
+  goog.asserts.assert(
+      parent != null, 'goog.dom.insertChildAt expects a non-null parent');
   parent.insertBefore(child, parent.childNodes[index] || null);
 };
 
@@ -1269,6 +1280,9 @@ goog.dom.removeNode = function(node) {
  * @param {Node} oldNode Node to replace.
  */
 goog.dom.replaceNode = function(newNode, oldNode) {
+  goog.asserts.assert(
+      newNode != null && oldNode != null,
+      'goog.dom.replaceNode expects non-null arguments');
   var parent = oldNode.parentNode;
   if (parent) {
     parent.replaceChild(newNode, oldNode);
@@ -1500,7 +1514,7 @@ goog.dom.getParentElement = function(element) {
  * Whether a node contains another node.
  * @param {?Node|undefined} parent The node that should contain the other node.
  * @param {?Node|undefined} descendant The node to test presence of.
- * @return {boolean} Whether the parent node contains the descendent node.
+ * @return {boolean} Whether the parent node contains the descendant node.
  */
 goog.dom.contains = function(parent, descendant) {
   if (!parent || !descendant) {
@@ -1764,7 +1778,7 @@ goog.dom.setTextContent = function(node, text) {
     // If the first child is a text node we just change its data and remove the
     // rest of the children.
     while (node.lastChild != node.firstChild) {
-      node.removeChild(node.lastChild);
+      node.removeChild(goog.asserts.assert(node.lastChild));
     }
     /** @type {!Text} */ (node.firstChild).data = String(text);
   } else {
@@ -1994,11 +2008,12 @@ goog.dom.isTabIndexFocusable_ = function(element) {
  * @private
  */
 goog.dom.nativelySupportsFocus_ = function(element) {
-  return element.tagName == goog.dom.TagName.A ||
+  return (
+      element.tagName == goog.dom.TagName.A && element.hasAttribute('href') ||
       element.tagName == goog.dom.TagName.INPUT ||
       element.tagName == goog.dom.TagName.TEXTAREA ||
       element.tagName == goog.dom.TagName.SELECT ||
-      element.tagName == goog.dom.TagName.BUTTON;
+      element.tagName == goog.dom.TagName.BUTTON);
 };
 
 
@@ -2652,7 +2667,7 @@ goog.dom.Appendable;
  *     of name-value pairs for attributes. If a string, then this is the
  *     className of the new element. If an array, the elements will be joined
  *     together as the className of the new element.
- * @param {...goog.dom.Appendable} var_args Further DOM nodes or
+ * @param {...(goog.dom.Appendable|undefined)} var_args Further DOM nodes or
  *     strings for text nodes. If one of the var_args is an array or
  *     NodeList, its elements will be added as childNodes instead.
  * @return {R} Reference to a DOM node. The return type is {!Element} if tagName
@@ -2674,9 +2689,9 @@ goog.dom.DomHelper.prototype.createDom = function(
  *     of name-value pairs for attributes. If a string, then this is the
  *     className of the new element. If an array, the elements will be joined
  *     together as the className of the new element.
- * @param {...goog.dom.Appendable} var_args Further DOM nodes or strings for
- *     text nodes.  If one of the var_args is an array, its children will be
- *     added as childNodes instead.
+ * @param {...(goog.dom.Appendable|undefined)} var_args Further DOM nodes or
+ *     strings for text nodes.  If one of the var_args is an array, its children
+ *     will be added as childNodes instead.
  * @return {R} Reference to a DOM node. The return type is {!Element} if tagName
  *     is a string or a more specific type if it is a member of
  *     goog.dom.TagName (e.g. {!HTMLAnchorElement} for goog.dom.TagName.A).
@@ -2980,7 +2995,7 @@ goog.dom.DomHelper.prototype.getParentElement = goog.dom.getParentElement;
  * Whether a node contains another node.
  * @param {Node} parent The node that should contain the other node.
  * @param {Node} descendant The node to test presence of.
- * @return {boolean} Whether the parent node contains the descendent node.
+ * @return {boolean} Whether the parent node contains the descendant node.
  */
 goog.dom.DomHelper.prototype.contains = goog.dom.contains;
 

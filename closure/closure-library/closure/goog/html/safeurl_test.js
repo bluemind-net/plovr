@@ -109,6 +109,147 @@ function testSafeUrlSanitize_sanitizeTelUrl() {
   }
 }
 
+function testSafeUrlSanitize_sanitizeSshUrl() {
+  var vectors = goog.html.safeUrlTestVectors.SSH_VECTORS;
+  for (var i = 0; i < vectors.length; ++i) {
+    var v = vectors[i];
+    var observed = goog.html.SafeUrl.fromSshUrl(v.input);
+    assertEquals(
+        'SSH Url: ' + v.input, v.expected, goog.html.SafeUrl.unwrap(observed));
+  }
+}
+
+
+function testSafeUrlSanitize_sipUrlEmail() {
+  var expected = 'sip:username@example.com';
+  var observed = goog.html.SafeUrl.fromSipUrl('sip:username@example.com');
+  assertEquals(expected, goog.html.SafeUrl.unwrap(observed));
+}
+
+
+function testSafeUrlSanitize_sipsUrlEmail() {
+  var expected = 'sips:username@example.com';
+  var observed = goog.html.SafeUrl.fromSipUrl('sips:username@example.com');
+  assertEquals(expected, goog.html.SafeUrl.unwrap(observed));
+}
+
+
+function testSafeUrlSanitize_sipProtocolCase() {
+  var expected = 'Sip:username@example.com';
+  var observed = goog.html.SafeUrl.fromSipUrl('Sip:username@example.com');
+  assertEquals(expected, goog.html.SafeUrl.unwrap(observed));
+}
+
+
+function testSafeUrlSanitize_sipUrlWithPort() {
+  var observed = goog.html.SafeUrl.fromSipUrl('sip:username@example.com:5000');
+  assertEquals(
+      goog.html.SafeUrl.INNOCUOUS_STRING, goog.html.SafeUrl.unwrap(observed));
+}
+
+
+function testSafeUrlSanitize_sipUrlFragment() {
+  var observed = goog.html.SafeUrl.fromSipUrl('sip:user#name@example.com');
+  assertEquals(
+      goog.html.SafeUrl.INNOCUOUS_STRING, goog.html.SafeUrl.unwrap(observed));
+}
+
+
+function testSafeUrlSanitize_sipUrlWithPassword() {
+  var observed =
+      goog.html.SafeUrl.fromSipUrl('sips:username:password@example.com');
+  assertEquals(
+      goog.html.SafeUrl.INNOCUOUS_STRING, goog.html.SafeUrl.unwrap(observed));
+}
+
+
+function testSafeUrlSanitize_sipUrlWithOptions() {
+  var observed = goog.html.SafeUrl.fromSipUrl('sips:user;na=me@example.com');
+  assertEquals(
+      goog.html.SafeUrl.INNOCUOUS_STRING, goog.html.SafeUrl.unwrap(observed));
+}
+
+
+function testSafeUrlSanitize_sipUrlWithPercent() {
+  var observed = goog.html.SafeUrl.fromSipUrl('sip:user%40name@example.com');
+  assertEquals(
+      goog.html.SafeUrl.INNOCUOUS_STRING, goog.html.SafeUrl.unwrap(observed));
+}
+
+
+function testSafeUrlSanitize_sipUrlWithAmbiguousQuery() {
+  var observed = goog.html.SafeUrl.fromSipUrl('sip:user?name@example.com');
+  assertEquals(
+      goog.html.SafeUrl.INNOCUOUS_STRING, goog.html.SafeUrl.unwrap(observed));
+}
+
+
+function testSafeUrlSanitize_sanitizeSmsUrl() {
+  var vectors = goog.html.safeUrlTestVectors.SMS_VECTORS;
+  for (var i = 0; i < vectors.length; ++i) {
+    var v = vectors[i];
+    var observed = goog.html.SafeUrl.fromSmsUrl(v.input);
+    assertEquals(v.expected, goog.html.SafeUrl.unwrap(observed));
+  }
+}
+
+
+function testSafeUrlSanitize_sanitizeChromeExtension() {
+  var extensionId = goog.string.Const.from('1234567890abcdef');
+  var observed = goog.html.SafeUrl.sanitizeChromeExtensionUrl(
+      'chrome-extension://1234567890abcdef/foo/bar', extensionId);
+  assertEquals(
+      'chrome-extension://1234567890abcdef/foo/bar',
+      goog.html.SafeUrl.unwrap(observed));
+
+  observed = goog.html.SafeUrl.sanitizeChromeExtensionUrl(
+      'chrome-extension://1234567890abcdef/foo/bar', [extensionId]);
+  assertEquals(
+      'chrome-extension://1234567890abcdef/foo/bar',
+      goog.html.SafeUrl.unwrap(observed));
+
+  observed = goog.html.SafeUrl.sanitizeChromeExtensionUrl(
+      'not-a-chrome-extension://1234567890abcdef/foo/bar', extensionId);
+  assertEquals(
+      goog.html.SafeUrl.INNOCUOUS_STRING, goog.html.SafeUrl.unwrap(observed));
+
+  observed = goog.html.SafeUrl.sanitizeChromeExtensionUrl(
+      'chrome-extension://fedcba0987654321/foo/bar', extensionId);
+  assertEquals(
+      goog.html.SafeUrl.INNOCUOUS_STRING, goog.html.SafeUrl.unwrap(observed));
+}
+
+
+function testSafeUrlSanitize_sanitizeFirefoxExtension() {
+  var extensionId = goog.string.Const.from('1234-5678-90ab-cdef');
+  var observed = goog.html.SafeUrl.sanitizeFirefoxExtensionUrl(
+      'moz-extension://1234-5678-90ab-cdef/foo/bar', extensionId);
+  assertEquals(
+      'moz-extension://1234-5678-90ab-cdef/foo/bar',
+      goog.html.SafeUrl.unwrap(observed));
+
+  observed = goog.html.SafeUrl.sanitizeFirefoxExtensionUrl(
+      'moz-extension://ms-browser-extension://1234-5678-90ab-cdef/foo/bar',
+      extensionId);
+  assertEquals(
+      goog.html.SafeUrl.INNOCUOUS_STRING, goog.html.SafeUrl.unwrap(observed));
+}
+
+
+function testSafeUrlSanitize_sanitizeEdgeExtension() {
+  var extensionId = goog.string.Const.from('1234-5678-90ab-cdef');
+  var observed = goog.html.SafeUrl.sanitizeEdgeExtensionUrl(
+      'ms-browser-extension://1234-5678-90ab-cdef/foo/bar', extensionId);
+  assertEquals(
+      'ms-browser-extension://1234-5678-90ab-cdef/foo/bar',
+      goog.html.SafeUrl.unwrap(observed));
+
+  observed = goog.html.SafeUrl.sanitizeEdgeExtensionUrl(
+      'chrome-extension://1234-5678-90ab-cdef/foo/bar', extensionId);
+  assertEquals(
+      goog.html.SafeUrl.INNOCUOUS_STRING, goog.html.SafeUrl.unwrap(observed));
+}
+
 
 function testFromTrustedResourceUrl() {
   var url = goog.string.Const.from('test');
@@ -121,7 +262,7 @@ function testFromTrustedResourceUrl() {
 
 /** @suppress {checkTypes} */
 function testUnwrap() {
-  var privateFieldName = 'privateDoNotAccessOrElseSafeHtmlWrappedValue_';
+  var privateFieldName = 'privateDoNotAccessOrElseSafeUrlWrappedValue_';
   var markerFieldName = 'SAFE_URL_TYPE_MARKER_GOOG_HTML_SECURITY_PRIVATE_';
   var propNames = goog.object.getKeys(goog.html.SafeUrl.sanitize(''));
   assertContains(privateFieldName, propNames);
@@ -139,20 +280,18 @@ function testSafeUrlSanitize_sanitizeUrl() {
   var vectors = goog.html.safeUrlTestVectors.BASE_VECTORS;
   for (var i = 0; i < vectors.length; ++i) {
     var v = vectors[i];
-    if (v.input.match(/^data:/i)) {
-      var observed = goog.html.SafeUrl.fromDataUrl(v.input);
-      assertEquals(v.expected, goog.html.SafeUrl.unwrap(observed));
+    var isDataUrl = v.input.match(/^data:/i);
+    var observed = isDataUrl ? goog.html.SafeUrl.fromDataUrl(v.input) :
+                               goog.html.SafeUrl.sanitize(v.input);
+    assertEquals(v.expected, goog.html.SafeUrl.unwrap(observed));
+    if (v.safe) {
+      var asserted =
+          goog.html.SafeUrl.sanitizeAssertUnchanged(v.input, isDataUrl);
+      assertEquals(v.expected, goog.html.SafeUrl.unwrap(asserted));
     } else {
-      var observed = goog.html.SafeUrl.sanitize(v.input);
-      assertEquals(v.expected, goog.html.SafeUrl.unwrap(observed));
-      if (v.safe) {
-        var asserted = goog.html.SafeUrl.sanitizeAssertUnchanged(v.input);
-        assertEquals(v.expected, goog.html.SafeUrl.unwrap(asserted));
-      } else {
-        assertThrows(function() {
-          goog.html.SafeUrl.sanitizeAssertUnchanged(v.input);
-        });
-      }
+      assertThrows(function() {
+        goog.html.SafeUrl.sanitizeAssertUnchanged(v.input, isDataUrl);
+      });
     }
   }
 }
@@ -169,12 +308,25 @@ function testSafeUrlSanitize_sanitizeProgramConstants() {
   // .sanitize() does not exempt values known to be program constants.
   var bad = goog.string.Const.from('data:blah');
   var badOutput = goog.html.SafeUrl.sanitize(bad);
-  assertEquals('about:invalid#zClosurez', goog.html.SafeUrl.unwrap(badOutput));
+  assertEquals(
+      goog.html.SafeUrl.INNOCUOUS_STRING, goog.html.SafeUrl.unwrap(badOutput));
   assertThrows(function() {
     goog.html.SafeUrl.sanitizeAssertUnchanged(bad);
   });
 }
 
+function testSafeUrlSanitize_sanitizePlainStringWithTypedStringProperty() {
+  // .sanitize() works on plain strings with property that wrongly indicates
+  // that the text is of a type that implements `goog.string.TypedString`. This
+  // simulates a property renaming collision with a String property set
+  // externally (b/80124112).
+  var plainString = 'http://example.com/';
+  plainString.implementsGoogStringTypedString = true;
+  var output = goog.html.SafeUrl.sanitize(plainString);
+  assertEquals('http://example.com/', goog.html.SafeUrl.unwrap(output));
+  var asserted = goog.html.SafeUrl.sanitizeAssertUnchanged(plainString);
+  assertEquals('http://example.com/', goog.html.SafeUrl.unwrap(asserted));
+}
 
 function testSafeUrlSanitize_idempotentForSafeUrlArgument() {
   // This matches the safe prefix.
@@ -189,4 +341,18 @@ function testSafeUrlSanitize_idempotentForSafeUrlArgument() {
   safeUrl2 = goog.html.SafeUrl.sanitize(safeUrl);
   assertEquals(
       goog.html.SafeUrl.unwrap(safeUrl), goog.html.SafeUrl.unwrap(safeUrl2));
+}
+
+function testSafeUrlSanitize_base64ImageSrc() {
+  var dataUrl = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAT4AAA';
+  var safeUrl = goog.html.SafeUrl.fromDataUrl(dataUrl);
+  assertEquals(goog.html.SafeUrl.unwrap(safeUrl), dataUrl);
+}
+
+function testSafeUrlSanitize_base64ImageSrcWithCRLF() {
+  var dataUrl = 'data:image/png;base64,iVBORw0KGgoA%0AAAANSUhEUgA%0DAAT4AAA%0A';
+  var safeUrl = goog.html.SafeUrl.fromDataUrl(dataUrl);
+  assertEquals(
+      goog.html.SafeUrl.unwrap(safeUrl),
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAT4AAA');
 }

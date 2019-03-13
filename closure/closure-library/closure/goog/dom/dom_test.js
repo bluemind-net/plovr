@@ -241,15 +241,29 @@ function testSetProperties() {
     'title': 'A title',
     'random': 'woop',
     'other-random': null,
-    'href': goog.html.SafeUrl.sanitize('https://google.com')
+    'href': goog.html.SafeUrl.sanitize('https://google.com'),
+    'stringWithTypedStringProp': 'http://example.com/',
+    'numberWithTypedStringProp': 123,
+    'booleanWithTypedStringProp': true
   };
-  var el = $('testEl');
+  // Primitives with properties that wrongly indicate that the text is of a type
+  // that implements `goog.string.TypedString`. This simulates a property
+  // renaming collision with a String, Number or Boolean property set
+  // externally. renaming collision with a String property set externally
+  // (b/80124112).
+  attrs['stringWithTypedStringProp'].implementsGoogStringTypedString = true;
+  attrs['numberWithTypedStringProp'].implementsGoogStringTypedString = true;
+  attrs['booleanWithTypedStringProp'].implementsGoogStringTypedString = true;
 
+  var el = $('testEl');
   goog.dom.setProperties(el, attrs);
-  assertEquals(el.name, 'test3');
-  assertEquals(el.title, 'A title');
-  assertEquals(el.random, 'woop');
-  assertEquals(el.href, 'https://google.com');
+  assertEquals('test3', el.name);
+  assertEquals('A title', el.title);
+  assertEquals('woop', el.random);
+  assertEquals('https://google.com', el.href);
+  assertEquals('http://example.com/', el.stringWithTypedStringProp);
+  assertEquals(123, el.numberWithTypedStringProp);
+  assertEquals(true, el.booleanWithTypedStringProp);
 }
 
 function testSetPropertiesDirectAttributeMap() {
@@ -675,25 +689,37 @@ function testReplaceNode() {
   assertNull('badNode should not be in the DOM tree', $('badReplaceNode'));
 }
 
-function testAppendChildAt() {
+function testInsertChildAt() {
   var parent = $('p2');
   var origNumChildren = parent.childNodes.length;
 
+  // Append, with last index.
   var child1 = goog.dom.createElement(goog.dom.TagName.DIV);
   goog.dom.insertChildAt(parent, child1, origNumChildren);
   assertEquals(origNumChildren + 1, parent.childNodes.length);
+  assertEquals(child1, parent.childNodes[parent.childNodes.length - 1]);
 
+  // Append, with value larger than last index.
   var child2 = goog.dom.createElement(goog.dom.TagName.DIV);
   goog.dom.insertChildAt(parent, child2, origNumChildren + 42);
   assertEquals(origNumChildren + 2, parent.childNodes.length);
+  assertEquals(child2, parent.childNodes[parent.childNodes.length - 1]);
 
+  // Prepend.
   var child3 = goog.dom.createElement(goog.dom.TagName.DIV);
   goog.dom.insertChildAt(parent, child3, 0);
   assertEquals(origNumChildren + 3, parent.childNodes.length);
+  assertEquals(child3, parent.childNodes[0]);
 
-  var child4 = goog.dom.createElement(goog.dom.TagName.DIV);
+  // Self move (no-op).
+  goog.dom.insertChildAt(parent, child3, 0);
+  assertEquals(origNumChildren + 3, parent.childNodes.length);
+  assertEquals(child3, parent.childNodes[0]);
+
+  // Move.
   goog.dom.insertChildAt(parent, child3, 2);
   assertEquals(origNumChildren + 3, parent.childNodes.length);
+  assertEquals(child3, parent.childNodes[1]);
 
   parent.removeChild(child1);
   parent.removeChild(child2);
@@ -1139,70 +1165,56 @@ function testSetFocusableTabIndex() {
   }
 }
 
+/**
+ * Simple alternative implementation of goog.dom.isFocusable. Serves as a sanity
+ * check whether the tests are correct. Unfortunately it can't replace the real
+ * implementation because of the side effects.
+ * @param {!Element} element
+ * @return {boolean}
+ */
+function isFocusableAlternativeImpl(element) {
+  element.focus();
+  return document.activeElement == element &&  // programmatically focusable
+      element.tabIndex >= 0;  // keyboard focusing is not disabled
+}
+
+/**
+ * @param {!Element} element
+ */
+function assertFocusable(element) {
+  var message = 'element with id=' + element.id + ' should be focusable';
+  assertTrue(message, isFocusableAlternativeImpl(element));
+  assertTrue(message, goog.dom.isFocusable(element));
+}
+
+/**
+ * @param {!Element} element
+ */
+function assertNotFocusable(element) {
+  var message = 'element with id=' + element.id + ' should not be focusable';
+  assertFalse(message, isFocusableAlternativeImpl(element));
+  assertFalse(message, goog.dom.isFocusable(element));
+}
+
 function testIsFocusable() {
-  // Test all types of form elements with no tab index specified are focusable.
-  assertTrue(
-      'isFocusable() must be true for anchor elements with ' +
-          'no tab index',
-      goog.dom.isFocusable(goog.dom.getElement('noTabIndexAnchor')));
-  assertTrue(
-      'isFocusable() must be true for input elements with ' +
-          'no tab index',
-      goog.dom.isFocusable(goog.dom.getElement('noTabIndexInput')));
-  assertTrue(
-      'isFocusable() must be true for textarea elements with ' +
-          'no tab index',
-      goog.dom.isFocusable(goog.dom.getElement('noTabIndexTextArea')));
-  assertTrue(
-      'isFocusable() must be true for select elements with ' +
-          'no tab index',
-      goog.dom.isFocusable(goog.dom.getElement('noTabIndexSelect')));
-  assertTrue(
-      'isFocusable() must be true for button elements with ' +
-          'no tab index',
-      goog.dom.isFocusable(goog.dom.getElement('noTabIndexButton')));
+  // Form elements without explicit tab index
+  assertFocusable(goog.dom.getElement('noTabIndexAnchor'));  // <a href>
+  assertNotFocusable(goog.dom.getElement('noTabIndexNoHrefAnchor'));  // <a>
+  assertFocusable(goog.dom.getElement('noTabIndexInput'));            // <input>
+  assertFocusable(goog.dom.getElement('noTabIndexTextArea'));  // <textarea>
+  assertFocusable(goog.dom.getElement('noTabIndexSelect'));    // <select>
+  assertFocusable(goog.dom.getElement('noTabIndexButton'));    // <button>
 
-  // Test form element with negative tab index is not focusable.
-  assertFalse(
-      'isFocusable() must be false for form elements with ' +
-          'negative tab index',
-      goog.dom.isFocusable(goog.dom.getElement('negTabIndexButton')));
+  // Form elements with explicit tab indices
+  assertNotFocusable(goog.dom.getElement('negTabIndexButton'));  // tabIndex=-1
+  assertFocusable(goog.dom.getElement('zeroTabIndexButton'));    // tabIndex=0
+  assertFocusable(goog.dom.getElement('posTabIndexButton'));     // tabIndex=1
 
-  // Test form element with zero tab index is focusable.
-  assertTrue(
-      'isFocusable() must be true for form elements with ' +
-          'zero tab index',
-      goog.dom.isFocusable(goog.dom.getElement('zeroTabIndexButton')));
-
-  // Test form element with positive tab index is focusable.
-  assertTrue(
-      'isFocusable() must be true for form elements with ' +
-          'positive tab index',
-      goog.dom.isFocusable(goog.dom.getElement('posTabIndexButton')));
-
-  // Test disabled form element with no tab index is not focusable.
-  assertFalse(
-      'isFocusable() must be false for disabled form elements with ' +
-          'no tab index',
-      goog.dom.isFocusable(goog.dom.getElement('disabledNoTabIndexButton')));
-
-  // Test disabled form element with negative tab index is not focusable.
-  assertFalse(
-      'isFocusable() must be false for disabled form elements with ' +
-          'negative tab index',
-      goog.dom.isFocusable(goog.dom.getElement('disabledNegTabIndexButton')));
-
-  // Test disabled form element with zero tab index is not focusable.
-  assertFalse(
-      'isFocusable() must be false for disabled form elements with ' +
-          'zero tab index',
-      goog.dom.isFocusable(goog.dom.getElement('disabledZeroTabIndexButton')));
-
-  // Test disabled form element with positive tab index is not focusable.
-  assertFalse(
-      'isFocusable() must be false for disabled form elements with ' +
-          'positive tab index',
-      goog.dom.isFocusable(goog.dom.getElement('disabledPosTabIndexButton')));
+  // Disabled form elements with different tab indices
+  assertNotFocusable(goog.dom.getElement('disabledNoTabIndexButton'));
+  assertNotFocusable(goog.dom.getElement('disabledNegTabIndexButton'));
+  assertNotFocusable(goog.dom.getElement('disabledZeroTabIndexButton'));
+  assertNotFocusable(goog.dom.getElement('disabledPosTabIndexButton'));
 
   // Test non-form types should return same value as isFocusableTabIndex()
   assertEquals(
